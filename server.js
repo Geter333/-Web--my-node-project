@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dns = require('dns');
 const authRoutes = require('./routes/authRoutes');
-const recipeRoutes = require('./routes/recipeRoutes'); // Нові маршрути рецептів
+const recipeRoutes = require('./routes/recipeRoutes');
 const AppError = require('./utils/AppError');
 const app = express();
 
@@ -18,7 +18,10 @@ app.use((req, res, next) => {
     next(new AppError(`Маршрут ${req.originalUrl} не знайдено на цьому сервері`, 404));
 });
 
+// Глобальний обробник помилок з детальним логуванням для відлагодження
 app.use((err, req, res, next) => {
+    console.error('Помилка сервера:', err);
+
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 
@@ -27,7 +30,8 @@ app.use((err, req, res, next) => {
     res.status(err.statusCode).json({
         success: false,
         message: message,
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+        errorDetails: process.env.NODE_ENV === 'development' ? err : undefined
     });
 });
 
@@ -39,8 +43,8 @@ const startServer = async () => {
         
         console.log(`Успішно підключено до MongoDB Atlas: ${conn.connection.host}`);
         
-        app.listen(process.env.PORT, () => {
-            console.log(`Сервер запущено на порту ${process.env.PORT}`);
+        app.listen(process.env.PORT || 3000, () => {
+            console.log(`Сервер запущено на порту ${process.env.PORT || 3000}`);
         });
         
     } catch (error) {
