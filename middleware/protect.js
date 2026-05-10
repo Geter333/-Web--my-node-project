@@ -4,12 +4,18 @@ const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 
 const protect = catchAsync(async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next(new AppError('Доступ заборонено. Токен відсутній', 401));
+  // Змінено: спочатку шукаємо токен у cookie, потім у заголовку (для сумісності)
+  let token;
+  
+  if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+  } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
   }
 
-  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return next(new AppError('Доступ заборонено. Токен відсутній', 401));
+  }
 
   let decoded;
   try {

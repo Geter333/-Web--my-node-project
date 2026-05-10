@@ -4,11 +4,15 @@ const authService = require('../services/authService');
 const { registerSchema, loginSchema } = require('../validators/authValidator');
 const AppError = require('../utils/AppError');
 
-// Допоміжна функція для генерації JWT
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN
     });
+};
+
+const cookieOptions = {
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 днів
 };
 
 // @desc    Реєстрація нового користувача
@@ -21,16 +25,16 @@ exports.register = catchAsync(async (req, res, next) => {
     const user = await authService.registerUser(req.body);
     const token = generateToken(user._id, user.role);
 
+    res.cookie('token', token, cookieOptions);
+
     res.status(201).json({
         success: true,
         message: 'Реєстрація успішна',
-        token,
         data: {
             id: user._id,
             name: user.name,
             email: user.email,
-            role: user.role,
-            createdAt: user.createdAt
+            role: user.role
         }
     });
 });
@@ -45,9 +49,11 @@ exports.login = catchAsync(async (req, res, next) => {
     const user = await authService.loginUser(req.body);
     const token = generateToken(user._id, user.role);
 
+    console.log("Встановлюємо cookie для користувача:", user.email);
+    res.cookie('token', token, cookieOptions);
+
     res.status(200).json({
         success: true,
-        token,
         data: {
             id: user._id,
             name: user.name,
@@ -57,10 +63,16 @@ exports.login = catchAsync(async (req, res, next) => {
     });
 });
 
+// @desc    Вихід користувача (Очищення cookie)
+// @route   POST /api/auth/logout
+exports.logout = catchAsync(async (req, res) => {
+    res.cookie('token', 'none', { ...cookieOptions, maxAge: 0 });
+    res.status(200).json({ success: true, message: 'Вихід успішний' });
+});
+
 // @desc    Отримання профілю поточного користувача
 // @route   GET /api/auth/me
 exports.getMe = catchAsync(async (req, res) => {
-    // req.user заповнюється в middleware/protect.js
     res.status(200).json({
         success: true,
         data: req.user

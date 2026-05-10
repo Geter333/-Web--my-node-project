@@ -12,7 +12,6 @@
     </style>
 </head>
 <body>
-
     <h1>Рецепти</h1>
     <div class="nav">
         <a href="/login.html">Увійти</a>
@@ -24,12 +23,15 @@
     <div id="recipeList">Завантаження...</div>
 
     <script>
+        // Динамічно визначаємо IP/домен сервера
+        const API_URL = `http://${window.location.hostname}:3000`;
+
         async function loadRecipes() {
             try {
-                // Виконуємо GET запит для отримання списку рецептів (він у нас публічний)
-                const response = await fetch('/api/recipes');
-                const result = await response.json();
+                // Публічний маршрут, credentials: 'include' не обов'язковий і іноді заважає
+                const response = await fetch(`${API_URL}/api/recipes`);
 
+                const result = await response.json();
                 const list = document.getElementById('recipeList');
 
                 if (!response.ok) {
@@ -37,8 +39,6 @@
                     return;
                 }
 
-                // В нашому API відповідь виглядає як { success: true, data: { recipes: [...] } }
-                // через те що ми додали пагінацію в минулій лабі
                 const recipes = result.data.recipes || result.data;
 
                 if (recipes.length === 0) {
@@ -60,13 +60,19 @@
             }
         }
 
-        // Обробка виходу з системи
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('token'); // Видаляємо JWT токен
-            window.location.href = '/login.html'; // Перекидаємо на логін
+        // Обробка виходу з системи через API
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await fetch(`${API_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                window.location.href = '/login.html';
+            } catch (err) {
+                alert('Помилка виходу');
+            }
         });
 
-        // Викликаємо функцію при завантаженні сторінки
         loadRecipes();
     </script>
 </body>

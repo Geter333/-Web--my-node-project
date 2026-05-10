@@ -11,7 +11,6 @@
     </style>
 </head>
 <body>
-
     <h1>Додати рецепт</h1>
     <a href="/index.html">← Назад до списку</a><br><br>
 
@@ -26,32 +25,25 @@
     <p id="message"></p>
 
     <script>
-        // ПЕРЕВІРКА АВТОРИЗАЦІЇ: Якщо токена немає, одразу перекидаємо на сторінку входу
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/login.html';
-        }
+        const API_URL = `http://${window.location.hostname}:3000`;
 
         document.getElementById('createForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Підготовка даних з форми
             const body = {
                 title: document.getElementById('title').value,
                 cuisine: document.getElementById('cuisine').value,
                 cookTime: Number(document.getElementById('cookTime').value),
-                // Розбиваємо рядок на масив інгредієнтів
                 ingredients: document.getElementById('ingredients').value.split(',').map(i => i.trim()),
                 steps: document.getElementById('steps').value
             };
 
             try {
-                // Виконання захищеного POST-запиту
-                const response = await fetch('/api/recipes', {
+                const response = await fetch(`${API_URL}/api/recipes`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // ПЕРЕДАЧА ТОКЕНА
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(body)
                 });
@@ -59,9 +51,7 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    // Якщо повернувся 401 (Неавторизовано/Токен прострочено)
                     if (response.status === 401) {
-                        localStorage.removeItem('token');
                         window.location.href = '/login.html';
                         return;
                     }
@@ -69,7 +59,6 @@
                     return;
                 }
 
-                // Якщо успішно
                 document.getElementById('message').style.color = 'green';
                 document.getElementById('message').textContent = 'Рецепт успішно додано!';
                 setTimeout(() => window.location.href = '/index.html', 1000);

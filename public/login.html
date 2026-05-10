@@ -11,7 +11,6 @@
     </style>
 </head>
 <body>
-
     <h1>Вхід</h1>
     <form id="loginForm">
         <input type="email" id="email" placeholder="Email" required>
@@ -22,8 +21,11 @@
     <p>Немає акаунту? <a href="/register.html">Зареєструватися</a></p>
 
     <script>
+        // ВАЖЛИВО: Динамічно визначаємо IP/домен, щоб уникнути конфліктів same-site cookies
+        const API_URL = `http://${window.location.hostname}:3000`;
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Запобігаємо перезавантаженню
+            e.preventDefault();
 
             const body = {
                 email: document.getElementById('email').value,
@@ -31,8 +33,9 @@
             };
 
             try {
-                const response = await fetch('/api/auth/login', {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
@@ -44,9 +47,6 @@
                     return;
                 }
 
-                // Зберегти токен
-                localStorage.setItem('token', data.token);
-                // Перенаправити на головну
                 window.location.href = '/index.html';
             } catch (err) {
                 document.getElementById('message').textContent = 'Помилка з\'єднання з сервером';

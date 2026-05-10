@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const dns = require('dns');
 const authRoutes = require('./routes/authRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
@@ -9,8 +11,13 @@ const app = express();
 
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
+app.use(cors({
+   origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
+   credentials: true 
+}));
+
 app.use(express.json());
-app.use(express.static('public')); // Додано для роздачі статики з папки public
+app.use(cookieParser()); 
 
 app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipeRoutes); 
@@ -19,9 +26,9 @@ app.use((req, res, next) => {
     next(new AppError(`Маршрут ${req.originalUrl} не знайдено на цьому сервері`, 404));
 });
 
-// Глобальний обробник помилок з детальним логуванням для відлагодження
 app.use((err, req, res, next) => {
-    console.error('Помилка сервера:', err);
+    // Додаємо логування методу та URL, щоб точно знати, який запит викликає помилку
+    console.error(`Помилка сервера [${req.method} ${req.originalUrl}]:`, err.message);
 
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';

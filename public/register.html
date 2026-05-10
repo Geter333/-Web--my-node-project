@@ -11,7 +11,6 @@
     </style>
 </head>
 <body>
-
     <h1>Реєстрація</h1>
     <form id="registerForm">
         <input type="text" id="name" placeholder="Ім'я" required>
@@ -24,8 +23,10 @@
     <p>Вже є акаунт? <a href="/login.html">Увійти</a></p>
 
     <script>
+        const API_URL = 'http://localhost:3000'; // Повний URL сервера
+
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Запобігаємо перезавантаженню сторінки
+            e.preventDefault();
 
             const body = {
                 name: document.getElementById('name').value,
@@ -35,8 +36,9 @@
             };
 
             try {
-                const response = await fetch('/api/auth/register', {
+                const response = await fetch(`${API_URL}/api/auth/register`, {
                     method: 'POST',
+                    credentials: 'include', // ОБОВ'ЯЗКОВО ДЛЯ COOKIES
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
@@ -44,17 +46,13 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    // response.ok === true лише для статусів 200-299
                     document.getElementById('message').textContent = data.message;
                     return;
                 }
 
-                // Зберегти токен після успішної реєстрації
-                localStorage.setItem('token', data.token);
                 document.getElementById('message').style.color = 'green';
                 document.getElementById('message').textContent = 'Реєстрація успішна!';
 
-                // Перенаправити на головну
                 setTimeout(() => window.location.href = '/index.html', 1000);
             } catch (err) {
                 document.getElementById('message').textContent = 'Помилка з\'єднання з сервером';
