@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Рецепти</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .recipe-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 15px; text-decoration: none; color: blue; }
+        #logoutBtn { background: none; border: none; color: red; cursor: pointer; font-size: 16px; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <h1>Рецепти</h1>
+    <div class="nav">
+        <a href="/login.html">Увійти</a>
+        <a href="/register.html">Реєстрація</a>
+        <a href="/create.html">Додати рецепт</a>
+        <button id="logoutBtn">Вийти</button>
+    </div>
+
+    <div id="recipeList">Завантаження...</div>
+
+    <script>
+        async function loadRecipes() {
+            try {
+                // Виконуємо GET запит для отримання списку рецептів (він у нас публічний)
+                const response = await fetch('/api/recipes');
+                const result = await response.json();
+
+                const list = document.getElementById('recipeList');
+
+                if (!response.ok) {
+                    list.innerHTML = `<p style="color:red">Помилка: ${result.message}</p>`;
+                    return;
+                }
+
+                // В нашому API відповідь виглядає як { success: true, data: { recipes: [...] } }
+                // через те що ми додали пагінацію в минулій лабі
+                const recipes = result.data.recipes || result.data;
+
+                if (recipes.length === 0) {
+                    list.innerHTML = '<p>Рецептів поки немає.</p>';
+                    return;
+                }
+
+                list.innerHTML = recipes.map(r => `
+                    <div class="recipe-card">
+                        <h3>${r.title}</h3>
+                        <p><strong>Кухня:</strong> ${r.cuisine} | <strong>Час:</strong> ${r.cookTime} хв</p>
+                        <p><strong>Інгредієнти:</strong> ${r.ingredients.join(', ')}</p>
+                        <p><em>Автор: ${r.createdBy ? r.createdBy.name : 'Невідомо'}</em></p>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                document.getElementById('recipeList').innerHTML = '<p style="color:red">Не вдалося завантажити дані</p>';
+            }
+        }
+
+        // Обробка виходу з системи
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token'); // Видаляємо JWT токен
+            window.location.href = '/login.html'; // Перекидаємо на логін
+        });
+
+        // Викликаємо функцію при завантаженні сторінки
+        loadRecipes();
+    </script>
+</body>
+</html>

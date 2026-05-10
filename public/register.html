@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Реєстрація</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        form { display: flex; flex-direction: column; width: 300px; gap: 10px; }
+        input, button { padding: 10px; font-size: 16px; }
+        #message { color: red; }
+    </style>
+</head>
+<body>
+
+    <h1>Реєстрація</h1>
+    <form id="registerForm">
+        <input type="text" id="name" placeholder="Ім'я" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Пароль (мін. 8 симв.)" required minlength="8">
+        <input type="password" id="confirmPassword" placeholder="Підтвердіть пароль" required>
+        <button type="submit">Зареєструватися</button>
+    </form>
+    <p id="message"></p>
+    <p>Вже є акаунт? <a href="/login.html">Увійти</a></p>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Запобігаємо перезавантаженню сторінки
+
+            const body = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                confirmPassword: document.getElementById('confirmPassword').value
+            };
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // response.ok === true лише для статусів 200-299
+                    document.getElementById('message').textContent = data.message;
+                    return;
+                }
+
+                // Зберегти токен після успішної реєстрації
+                localStorage.setItem('token', data.token);
+                document.getElementById('message').style.color = 'green';
+                document.getElementById('message').textContent = 'Реєстрація успішна!';
+
+                // Перенаправити на головну
+                setTimeout(() => window.location.href = '/index.html', 1000);
+            } catch (err) {
+                document.getElementById('message').textContent = 'Помилка з\'єднання з сервером';
+            }
+        });
+    </script>
+</body>
+</html>

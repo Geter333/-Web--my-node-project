@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Додати рецепт</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        form { display: flex; flex-direction: column; width: 400px; gap: 10px; }
+        input, textarea, button { padding: 10px; font-size: 16px; }
+        #message { color: red; }
+    </style>
+</head>
+<body>
+
+    <h1>Додати рецепт</h1>
+    <a href="/index.html">← Назад до списку</a><br><br>
+
+    <form id="createForm">
+        <input type="text" id="title" placeholder="Назва страви" required>
+        <input type="text" id="cuisine" placeholder="Тип кухні (наприклад, Італійська)" required>
+        <input type="number" id="cookTime" placeholder="Час приготування (хв)" min="1" required>
+        <input type="text" id="ingredients" placeholder="Інгредієнти (через кому)" required>
+        <textarea id="steps" placeholder="Опис процесу приготування" rows="5" required></textarea>
+        <button type="submit">Додати</button>
+    </form>
+    <p id="message"></p>
+
+    <script>
+        // ПЕРЕВІРКА АВТОРИЗАЦІЇ: Якщо токена немає, одразу перекидаємо на сторінку входу
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Підготовка даних з форми
+            const body = {
+                title: document.getElementById('title').value,
+                cuisine: document.getElementById('cuisine').value,
+                cookTime: Number(document.getElementById('cookTime').value),
+                // Розбиваємо рядок на масив інгредієнтів
+                ingredients: document.getElementById('ingredients').value.split(',').map(i => i.trim()),
+                steps: document.getElementById('steps').value
+            };
+
+            try {
+                // Виконання захищеного POST-запиту
+                const response = await fetch('/api/recipes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // ПЕРЕДАЧА ТОКЕНА
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Якщо повернувся 401 (Неавторизовано/Токен прострочено)
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    document.getElementById('message').textContent = data.message;
+                    return;
+                }
+
+                // Якщо успішно
+                document.getElementById('message').style.color = 'green';
+                document.getElementById('message').textContent = 'Рецепт успішно додано!';
+                setTimeout(() => window.location.href = '/index.html', 1000);
+            } catch (err) {
+                document.getElementById('message').textContent = 'Помилка з\'єднання з сервером';
+            }
+        });
+    </script>
+</body>
+</html>

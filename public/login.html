@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Вхід</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        form { display: flex; flex-direction: column; width: 300px; gap: 10px; }
+        input, button { padding: 10px; font-size: 16px; }
+        #message { color: red; }
+    </style>
+</head>
+<body>
+
+    <h1>Вхід</h1>
+    <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Пароль" required>
+        <button type="submit">Увійти</button>
+    </form>
+    <p id="message"></p>
+    <p>Немає акаунту? <a href="/register.html">Зареєструватися</a></p>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Запобігаємо перезавантаженню
+
+            const body = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    document.getElementById('message').textContent = data.message;
+                    return;
+                }
+
+                // Зберегти токен
+                localStorage.setItem('token', data.token);
+                // Перенаправити на головну
+                window.location.href = '/index.html';
+            } catch (err) {
+                document.getElementById('message').textContent = 'Помилка з\'єднання з сервером';
+            }
+        });
+    </script>
+</body>
+</html>
