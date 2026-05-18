@@ -1,6 +1,6 @@
 const catchAsync = require('../utils/catchAsync');
 const recipeService = require('../services/recipeService');
-const { createRecipeSchema, updateRecipeSchema } = require('../validators/recipeValidator');
+const { createRecipeSchema, updateRecipeSchema } = require('../validators/recipeValidators'); // Змінено на правильну назву з "s"
 const AppError = require('../utils/AppError');
 
 // GET: Отримати всі рецепти (Публічний)

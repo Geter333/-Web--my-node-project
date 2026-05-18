@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const catchAsync = require('../utils/catchAsync');
 const authService = require('../services/authService');
-const { registerSchema, loginSchema } = require('../validators/authValidator');
+const { registerSchema, loginSchema } = require('../validators/authValidators');
 const AppError = require('../utils/AppError');
 
 const generateToken = (id, role) => {
