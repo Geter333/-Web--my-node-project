@@ -14,6 +14,12 @@ const AppError = require('./utils/AppError');
 const app = express();
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
+// Додано: Заборона кешування для запобігання змішуванню сесій
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    next();
+});
+
 // 1. Встановлюємо безпечні HTTP-заголовки
 app.use(helmet());
 
