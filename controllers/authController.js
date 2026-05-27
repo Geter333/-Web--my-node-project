@@ -10,8 +10,13 @@ const generateToken = (id, role) => {
     });
 };
 
+// Оновлені опції для cookie
 const cookieOptions = {
     httpOnly: true,
+    // В режимі production (на Render) cookie мають бути secure
+    secure: process.env.NODE_ENV === 'production', 
+    // Для cross-site запитів (Netlify -> Render) обов'язково 'none'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 днів
 };
 
