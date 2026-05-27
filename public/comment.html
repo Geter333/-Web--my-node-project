@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Залишити коментар</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .field { margin-bottom: 16px; width: 400px; }
+        textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+        .field-error { color: red; font-size: 12px; min-height: 16px; display: block; }
+        #submitBtn { padding: 10px; font-size: 16px; }
+        #submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #serverErrors p { color: red; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>Залишити коментар</h1>
+    <a href="/index.html">← Назад до списку рецептів</a><br><br>
+
+    <div id="serverErrors"></div>
+
+    <form id="commentForm">
+        <div class="field">
+            <label for="text">Ваш коментар:</label>
+            <textarea id="text" rows="5" placeholder="Мінімум 5 символів" required></textarea>
+            <span class="field-error" id="textError"></span>
+        </div>
+        <button type="submit" id="submitBtn" disabled>Надіслати</button>
+    </form>
+
+    <script>
+        const API_URL = `http://${window.location.hostname}:3000`;
+
+        // Отримуємо ID рецепта з URL-параметра
+        const params = new URLSearchParams(window.location.search);
+        const recipeId = params.get('recipeId');
+
+        // Якщо ID немає, повертаємо на головну
+        if (!recipeId) {
+            window.location.href = '/index.html';
+        }
+
+        const textInput = document.getElementById('text');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function validateComment() {
+            const textError = document.getElementById('textError');
+            if (textInput.value.length < 5) {
+                textError.textContent = 'Коментар має містити мінімум 5 символів';
+                submitBtn.disabled = true;
+            } else {
+                textError.textContent = '';
+                submitBtn.disabled = false;
+            }
+        }
+
+        textInput.addEventListener('input', validateComment);
+
+        document.getElementById('commentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Додаткова перевірка перед відправкою
+            validateComment();
+            if (submitBtn.disabled) return;
+
+            document.getElementById('serverErrors').innerHTML = '';
+
+            const body = {
+                text: textInput.value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/api/recipes/${recipeId}/comments`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Якщо неавторизовано, перекидаємо на логін
+                    if (response.status === 401) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    // Обробка серверних помилок (Joi або інші)
+                    const container = document.getElementById('serverErrors');
+                    const errorMessages = data.message.split(', ');
+                    container.innerHTML = errorMessages.map(msg => `<p>${msg}</p>`).join('');
+                    return;
+                }
+
+                // Успішне створення
+                document.getElementById('serverErrors').innerHTML = '<p style="color: green;">Коментар успішно додано!</p>';
+                setTimeout(() => window.location.href = '/index.html', 1500);
+
+            } catch (err) {
+                document.getElementById('serverErrors').innerHTML = '<p>Помилка з\'єднання з сервером</p>';
+            }
+        });
+    </script>
+</body>
+</html>

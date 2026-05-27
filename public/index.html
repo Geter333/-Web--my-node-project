@@ -5,10 +5,13 @@
     <title>Рецепти</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
-        .recipe-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+        .recipe-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
         .nav { margin-bottom: 20px; }
         .nav a { margin-right: 15px; text-decoration: none; color: blue; }
         #logoutBtn { background: none; border: none; color: red; cursor: pointer; font-size: 16px; text-decoration: underline; }
+        .comment-link { margin-left: 15px; font-weight: bold; }
+        .comments-section { margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        .comment { font-size: 14px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -23,14 +26,36 @@
     <div id="recipeList">Завантаження...</div>
 
     <script>
-        // Динамічно визначаємо IP/домен сервера
         const API_URL = `http://${window.location.hostname}:3000`;
+
+        // Функція для завантаження та відображення коментарів
+        async function loadComments(recipeId, container) {
+            try {
+                const response = await fetch(`${API_URL}/api/recipes/${recipeId}/comments`);
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    container.innerHTML = '<p style="font-size:12px; color:grey;">Не вдалося завантажити коментарі.</p>';
+                    return;
+                }
+
+                if (result.data.length === 0) {
+                    container.innerHTML = '<p style="font-size:12px; color:grey;">Коментарів ще немає.</p>';
+                } else {
+                    container.innerHTML = '<strong>Коментарі:</strong>' + result.data.map(c => `
+                        <div class="comment">
+                            <strong>${c.user ? c.user.name : 'Анонім'}:</strong> ${c.text}
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                container.innerHTML = '<p style="font-size:12px; color:red;">Помилка завантаження коментарів.</p>';
+            }
+        }
 
         async function loadRecipes() {
             try {
-                // Публічний маршрут, credentials: 'include' не обов'язковий і іноді заважає
                 const response = await fetch(`${API_URL}/api/recipes`);
-
                 const result = await response.json();
                 const list = document.getElementById('recipeList');
 
@@ -47,20 +72,31 @@
                 }
 
                 list.innerHTML = recipes.map(r => `
-                    <div class="recipe-card">
+                    <div class="recipe-card" id="recipe-${r._id}">
                         <h3>${r.title}</h3>
                         <p><strong>Кухня:</strong> ${r.cuisine} | <strong>Час:</strong> ${r.cookTime} хв</p>
                         <p><strong>Інгредієнти:</strong> ${r.ingredients.join(', ')}</p>
-                        <p><em>Автор: ${r.createdBy ? r.createdBy.name : 'Невідомо'}</em></p>
+                        <p>
+                            <em>Автор: ${r.createdBy ? r.createdBy.name : 'Невідомо'}</em>
+                            <a href="/comment.html?recipeId=${r._id}" class="comment-link">Залишити коментар</a>
+                        </p>
+                        <div class="comments-section" id="comments-for-${r._id}">
+                            <p style="font-size:12px; color:grey;">Завантаження коментарів...</p>
+                        </div>
                     </div>
                 `).join('');
+
+                // Після того, як всі рецепти вставлені в DOM, завантажуємо для них коментарі
+                recipes.forEach(r => {
+                    const commentContainer = document.getElementById(`comments-for-${r._id}`);
+                    loadComments(r._id, commentContainer);
+                });
 
             } catch (err) {
                 document.getElementById('recipeList').innerHTML = '<p style="color:red">Не вдалося завантажити дані</p>';
             }
         }
 
-        // Обробка виходу з системи через API
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             try {
                 await fetch(`${API_URL}/api/auth/logout`, {
