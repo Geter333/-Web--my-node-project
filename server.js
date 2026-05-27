@@ -19,8 +19,12 @@ app.use(helmet());
 
 // 2. Налаштування CORS
 app.use(cors({
-   origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
-   credentials: true 
+    origin: [
+        process.env.CLIENT_URL, // Додаємо змінну з Render!
+        'http://127.0.0.1:5500',
+        'http://localhost:5500'
+    ],
+    credentials: true
 }));
 
 // 3. Логування HTTP-запитів (тільки в режимі розробки)
